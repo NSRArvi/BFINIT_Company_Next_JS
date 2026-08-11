@@ -11,7 +11,7 @@ import Container from "./Container";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { ExternalLink, LogOut } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -282,6 +282,19 @@ export default function Navbar() {
                       className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#09090b] transition-colors hover:bg-[#f4f4f5]"
                     >
                       My Orders
+                    </Link>
+                    <Link
+                      onClick={() => setUserMenuOpen(false)}
+                      href="https://shopadmin.bfinit.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#09090b] transition-colors hover:bg-[#f4f4f5]"
+                    >
+                      Store Panel
+                      <ExternalLink
+                        size={13}
+                        className="text-muted-foreground"
+                      />
                     </Link>
                     {/* Divider */}
                     <div className="my-1 border-t border-[#f4f4f5]" />

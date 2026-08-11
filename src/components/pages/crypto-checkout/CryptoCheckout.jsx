@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import {
   getAssociatedTokenAddress,
@@ -23,6 +23,7 @@ const RECEIVER_ADDRESS = process.env.NEXT_PUBLIC_RECEIVER_ADDRESS;
 const RPC_ENDPOINT = process.env.NEXT_PUBLIC_RPC_ENDPOINT;
 
 export default function CryptoCheckout() {
+  const router = useRouter();
   const { packageId, duration: durationQuery, invoice_number } = useParams();
   const { token } = useAuth();
 
@@ -129,12 +130,18 @@ export default function CryptoCheckout() {
   // fetch radium price
   useEffect(() => {
     const fetchTokenPrice = async () => {
+      // TEMP: skip live price lookup for devnet test token
+      if (process.env.NEXT_PUBLIC_RPC_ENDPOINT?.includes("devnet")) {
+        setTokenRate(0.000369); // fake rate matching your earlier real quote
+        setLoadingTokenPrice(false);
+        return;
+      }
+
       try {
         const price = await fetchRadiumPrice();
         setTokenRate(price);
       } catch {
         try {
-          console.warn("Raydium failed, falling back to Jupiter...");
           const price = await fetchJupiterPrice();
           setTokenRate(price);
         } catch (e) {
@@ -272,12 +279,13 @@ export default function CryptoCheckout() {
 
         if (!res.ok) throw new Error(`Verify failed: ${res.status}`);
         const data = await res.json();
-        console.log("Payment verified:", data);
 
-        setTxStatus("success");
+        if (data?.success && data?.data?.invoiceNumber) {
+          setTxStatus("success");
+          router.push(`/order-confirmation/${invoice_number}`);
+        }
       } catch (verifyErr) {
         console.error("Backend verify failed:", verifyErr);
-        setTxStatus("success");
         setTxError(
           `Payment sent but verification pending. Save your transaction ID: ${sig}`,
         );

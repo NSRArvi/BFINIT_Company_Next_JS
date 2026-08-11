@@ -55,67 +55,52 @@ export default function MyOrders() {
       <div className="min-h-screen py-16">
         <div className="py-10">
           {/* Page Header */}
-          <div className="pb-4">
-            <h1 className="font-inter text-3xl font-extrabold leading-tight text-gray-900">
-              My Orders
-            </h1>
+          <div className="pb-6">
+            <h1 className="text-xl font-semibold text-foreground">My Orders</h1>
             {meta && !loading && (
-              <p className="mt-1 font-sora text-sm text-gray-400">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {meta.total} order{meta.total !== 1 ? "s" : ""} found
               </p>
             )}
           </div>
 
           {/* Content */}
-          {loading && (
-            <div className="space-y-4">
-              <OrderTableSkeleton />
-            </div>
-          )}
+          {loading && <OrderTableSkeleton />}
 
           {error && (
-            <div
-              className="flex items-start gap-4 rounded-2xl p-6"
-              style={{ background: "#fff5f5", border: "1.5px solid #fecaca" }}>
+            <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-5">
               <XCircle
-                size={22}
-                color="#ef4444"
+                size={18}
+                className="mt-0.5 shrink-0 text-destructive"
                 strokeWidth={2}
-                className="mt-0.5 shrink-0"
               />
               <div>
-                <p className="mb-1 font-montserrat font-bold text-red-700">
+                <p className="text-sm font-medium text-destructive">
                   Failed to load orders
                 </p>
-                <p className="font-sora text-sm text-red-500">{error}</p>
+                <p className="mt-0.5 text-xs text-destructive/80">{error}</p>
               </div>
             </div>
           )}
 
           {!loading && !error && orders.length === 0 && (
-            <div
-              className="rounded-2xl p-12 text-center"
-              style={{ background: "white", border: "1.5px solid #e8edf2" }}>
+            <div className="rounded-lg border border-border bg-card py-16 text-center">
               <Package
-                size={40}
-                className="mx-auto mb-4 text-gray-300"
+                size={32}
+                className="mx-auto mb-3 text-muted-foreground"
                 strokeWidth={1.5}
               />
-              <p className="font-montserrat text-lg font-bold text-gray-500">
+              <p className="text-sm font-medium text-foreground">
                 No orders yet
               </p>
-              <p className="mt-1 font-sora text-sm text-gray-400">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Your subscription orders will appear here.
               </p>
             </div>
           )}
 
           {!loading && !error && orders.length > 0 && (
-            <div className="space-y-4">
-              <div className="w-full">
-                <OrderTable orders={orders} />
-              </div>
-            </div>
+            <OrderTable orders={orders} />
           )}
         </div>
       </div>
