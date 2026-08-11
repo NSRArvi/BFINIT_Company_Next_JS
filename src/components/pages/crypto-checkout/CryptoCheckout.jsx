@@ -130,13 +130,6 @@ export default function CryptoCheckout() {
   // fetch radium price
   useEffect(() => {
     const fetchTokenPrice = async () => {
-      // TEMP: skip live price lookup for devnet test token
-      if (process.env.NEXT_PUBLIC_RPC_ENDPOINT?.includes("devnet")) {
-        setTokenRate(0.000369); // fake rate matching your earlier real quote
-        setLoadingTokenPrice(false);
-        return;
-      }
-
       try {
         const price = await fetchRadiumPrice();
         setTokenRate(price);
