@@ -9,6 +9,7 @@ import {
   Copy,
   Check,
   Download,
+  CreditCard,
 } from "lucide-react";
 
 import useAuth from "@/hooks/useAuth";
@@ -91,7 +92,8 @@ export default function OrderConfirmation({ invoice }) {
   const customer = order.user;
 
   const isBank = invoices?.payment_method === "bank_transfer";
-  const isCrypto = !isBank;
+  const isCrypto = !isBank && !invoices?.payment_method === "stripe";
+  const isStripe = invoices?.payment_method === "stripe";
   const currency = (upgrade?.currency ?? "EUR").toUpperCase();
   const totalPaid = invoices?.payment_amount ?? upgrade?.amount;
   const isSettled = order.status === "active" || invoices?.status === "paid";
@@ -232,8 +234,23 @@ export default function OrderConfirmation({ invoice }) {
             </p>
 
             <div className="mt-3 flex items-center gap-2 text-sm text-foreground">
-              {isBank ? <Building2 size={14} /> : <Bitcoin size={14} />}
-              {isBank ? "Bank Transfer" : "Crypto"}
+              {isBank && (
+                <>
+                  <Building2 size={14} /> <span>Bank Transfer</span>
+                </>
+              )}
+
+              {isCrypto && (
+                <>
+                  <Bitcoin size={14} /> <span>Crypto</span>
+                </>
+              )}
+
+              {isStripe && (
+                <>
+                  <CreditCard size={14} /> <span>Stripe</span>
+                </>
+              )}
             </div>
 
             {isBank && manual && (
@@ -267,13 +284,21 @@ export default function OrderConfirmation({ invoice }) {
               </div>
             )}
 
-            {isCrypto && (
+            {!isBank && (
               <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
                 {invoices?.sol_amount && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Amount sent</span>
                     <span className="font-mono text-foreground">
                       {parseFloat(invoices.sol_amount).toFixed(4)}
+                    </span>
+                  </div>
+                )}
+                {invoices?.payment_amount && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Amount sent</span>
+                    <span className="font-mono text-foreground">
+                      €{parseFloat(invoices.payment_amount).toFixed(2)}
                     </span>
                   </div>
                 )}
