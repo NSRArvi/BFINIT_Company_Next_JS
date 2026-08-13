@@ -6,14 +6,12 @@ import {
   Check,
   Building2,
   Sparkles,
-  Copy,
-  CheckCheck,
   Lock,
   Tag,
   CircleCheck,
 } from "lucide-react";
 import stripeIcon from "../../assets/icons/stripe.png";
-import Link from "next/link";
+import BankInfo from "./order-details/BankInfo";
 
 const PAYMENT_METHODS = [
   {
@@ -36,39 +34,6 @@ const PAYMENT_METHODS = [
   },
 ];
 
-function CopyField({ label, value }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-[#8FADC8]">
-          {label}
-        </p>
-        <p className="truncate text-xs font-semibold text-[#0F1F2E]">{value}</p>
-      </div>
-      <button
-        type="button"
-        onClick={handleCopy}
-        className="shrink-0 rounded-lg p-1.5 text-[#8FADC8] transition-colors hover:bg-[#F4F7FB] hover:text-[#186BB5]"
-        title="Copy"
-      >
-        {copied ? (
-          <CheckCheck size={13} className="text-green-500" />
-        ) : (
-          <Copy size={13} />
-        )}
-      </button>
-    </div>
-  );
-}
-
 export default function OrderDetails({
   details,
   onPaymentChange,
@@ -87,12 +52,11 @@ export default function OrderDetails({
 
   const activePayment = paymentMethod ?? localPayment;
 
-  const { id, package_type_label, package_name, pricing } = details;
+  const { package_type_label, package_name, pricing } = details;
   const {
     duration,
     base_price, // monthly price
     total_base_price, // actual total for this period (base_price × duration)
-    offer_percentage, // discount % — null means no discount
   } = pricing;
 
   // If there's an offer, compute discount off total_base_price
@@ -281,43 +245,7 @@ export default function OrderDetails({
 
         {/* Bank Info */}
         {!isCryptoCurrencySelected && activePayment === "bank" && bankInfo && (
-          <div className="overflow-hidden rounded-xl border border-[#D6E4F0]">
-            <div className="border-b border-[#D6E4F0] bg-[#186BB5]/5 px-4 py-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#186BB5]">
-                Bank Transfer Details
-              </p>
-              <p className="mt-0.5 text-[11px] text-[#4A6580]">
-                Transfer the exact total below, then upload your slip.
-              </p>
-            </div>
-            <div className="divide-y divide-[#D6E4F0] px-4 py-1">
-              <div className="py-2.5">
-                <CopyField label="Bank Name" value={bankInfo.bank_name} />
-              </div>
-              <div className="py-2.5">
-                <CopyField label="Account Name" value={bankInfo.account_name} />
-              </div>
-              <div className="py-2.5">
-                <CopyField
-                  label="Account Number"
-                  value={bankInfo.account_number}
-                />
-              </div>
-              {bankInfo.routing_number && (
-                <div className="py-2.5">
-                  <CopyField
-                    label="Routing Number"
-                    value={bankInfo.routing_number}
-                  />
-                </div>
-              )}
-              {bankInfo.swift_code && (
-                <div className="py-2.5">
-                  <CopyField label="SWIFT / BIC" value={bankInfo.swift_code} />
-                </div>
-              )}
-            </div>
-          </div>
+          <BankInfo />
         )}
 
         {/* Summary */}
