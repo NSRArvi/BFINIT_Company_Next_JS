@@ -22,7 +22,6 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  console.log(errors);
 
   // OTP step state
   const [otpStep, setOtpStep] = useState(false);

@@ -67,7 +67,7 @@ export default function BankInfo() {
       `${ECOM_BASE_URL}/api/v1/platform-bank-payment/get-all`,
     );
     const data = await res.json();
-    if (data?.success && data?.data?.length > 0) setBankInfo(data?.data[0]);
+    if (data?.success && data?.data?.length > 0) setBankInfo(data?.data);
     setLoadingBank(false);
   };
 
@@ -80,8 +80,8 @@ export default function BankInfo() {
       <p className="text-[11px] text-[#4A6580]">
         Transfer the exact total to any one bank below, then upload your slip.
       </p>
-      {bankInfo?.data?.length > 0 &&
-        bankInfo?.data?.map((bank) => <BankCard key={bank.id} bank={bank} />)}
+      {bankInfo?.length > 0 &&
+        bankInfo?.map((bank) => <BankCard key={bank.id} bank={bank} />)}
     </div>
   );
 }

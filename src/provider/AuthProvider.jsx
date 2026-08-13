@@ -34,7 +34,6 @@ export default function AuthProvider({ children }) {
   }, []);
 
   const saveAuth = useCallback((responseData) => {
-    console.log("Response data:", responseData);
     const { token, data } = responseData;
     const { user, roles } = data;
 

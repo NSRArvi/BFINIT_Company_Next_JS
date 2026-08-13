@@ -77,13 +77,13 @@ export default function Checkout() {
 
   if (!loading && packDetails?.id) {
     content = (
-      <div>
+      <section>
         <CheckoutForm
           details={packDetails}
           currencies={currencies}
           bankInfo={bankInfo}
         />
-      </div>
+      </section>
     );
   }
 
