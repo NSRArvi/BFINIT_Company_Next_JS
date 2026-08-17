@@ -1,13 +1,25 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import { FiChevronDown } from "react-icons/fi";
 import Link from "next/link";
 import useAuth from "@/hooks/useAuth";
-import { post } from "@/lib/api";
+import { post, get } from "@/lib/api";
 import Container from "@/components/shared/Container";
 import { useRouter } from "next/navigation";
 
 const SESSION_KEY = "register_pending";
+const DEFAULT_COUNTRY = {
+  id: 76,
+  name: "France",
+  short_name: "FRA",
+  iso2: "FR",
+  country_code: "+33",
+  flag_emoji: "🇫🇷",
+  currency_code: "EUR",
+  currency_name: "Euro",
+  abbreviation: "€",
+};
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -28,8 +40,43 @@ export default function Register() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const otpRefs = useRef([]);
 
+  // Country code state
+  const [countries, setCountries] = useState([]);
+  const [selectedCountry, setSelectedCountry] = useState(DEFAULT_COUNTRY);
+  const [countryOpen, setCountryOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState("");
+  const countryDropdownRef = useRef(null);
+
   const { saveAuth } = useAuth();
   const navigate = useRouter();
+
+  // Fetch countries once on mount
+  useEffect(() => {
+    const fetchCountries = async () => {
+      const { data, ok } = await get("/api/v1/country");
+      if (ok && data?.data?.length) {
+        setCountries(data.data);
+        // Keep DEFAULT_COUNTRY unless you want to default to the API's first entry:
+        // setSelectedCountry(data.data.find((c) => c.iso2 === "US") || data.data[0]);
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  // Close country dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        countryDropdownRef.current &&
+        !countryDropdownRef.current.contains(e.target)
+      ) {
+        setCountryOpen(false);
+        setCountrySearch("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // On mount: check if we were mid-registration (e.g. user refreshed on OTP screen)
   useEffect(() => {
@@ -42,12 +89,28 @@ export default function Register() {
           ...parsed,
           confirmPassword: parsed.password,
         }));
+        if (parsed.countryCode) {
+          setSelectedCountry((prev) => ({
+            ...prev,
+            country_code: parsed.countryCode,
+          }));
+        }
         setOtpStep(true);
       } catch {
         sessionStorage.removeItem(SESSION_KEY);
       }
     }
   }, []);
+
+  const filteredCountries = countries.filter((c) => {
+    const q = countrySearch.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      c.name.toLowerCase().includes(q) ||
+      c.country_code.includes(q) ||
+      c.iso2.toLowerCase().includes(q)
+    );
+  });
 
   // ─── Validation ────────────────────────────────────────────────────────────
 
@@ -66,9 +129,10 @@ export default function Register() {
       newErrors.email = "Enter a valid email address.";
     }
 
+    // Phone is validated separately from the country code now
     if (!form.phone) {
       newErrors.phone = "Phone number is required.";
-    } else if (!/^\+?[0-9\s\-().]{7,20}$/.test(form.phone)) {
+    } else if (!/^[0-9\s\-().]{4,14}$/.test(form.phone)) {
       newErrors.phone = "Enter a valid phone number.";
     }
 
@@ -95,6 +159,13 @@ export default function Register() {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+  };
+
+  const handleSelectCountry = (country) => {
+    setSelectedCountry(country);
+    setCountryOpen(false);
+    setCountrySearch("");
+    if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
   };
 
   // OTP digit input handling
@@ -144,7 +215,8 @@ export default function Register() {
     const payload = {
       name: form.name,
       email: form.email,
-      phone: form.phone,
+      country_code: selectedCountry.country_code,
+      phone: form.phone.replace(/[\s\-().]/g, ""),
       password: form.password,
     };
 
@@ -168,6 +240,7 @@ export default function Register() {
           name: form.name,
           email: form.email,
           phone: form.phone,
+          countryCode: selectedCountry.country_code,
           password: form.password,
         }),
       );
@@ -196,7 +269,8 @@ export default function Register() {
     const payload = {
       name: pending.name,
       email: pending.email,
-      phone: pending.phone,
+      country_code: pending.countryCode || selectedCountry.country_code,
+      phone: (pending.phone || "").replace(/[\s\-().]/g, ""),
       password: pending.password,
       otp_code: otpCode,
     };
@@ -388,7 +462,7 @@ export default function Register() {
                     )}
                   </div>
 
-                  {/* Phone */}
+                  {/* Phone (with country code) */}
                   <div className="flex flex-col gap-1.5">
                     <label
                       htmlFor="phone"
@@ -396,16 +470,71 @@ export default function Register() {
                     >
                       Phone Number
                     </label>
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      autoComplete="tel"
-                      placeholder="+1234567890"
-                      value={form.phone}
-                      onChange={handleChange}
-                      className={inputClass("phone")}
-                    />
+                    <div className="flex gap-2">
+                      <div
+                        className="relative shrink-0"
+                        ref={countryDropdownRef}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setCountryOpen((p) => !p)}
+                          className="flex h-10 items-center gap-1.5 rounded-lg border border-[#e4e4e7] bg-white px-3 text-sm text-[#09090b] transition-colors hover:border-[#a1a1aa]"
+                        >
+                          <span className="text-base leading-none">
+                            {selectedCountry.flag_emoji}
+                          </span>
+                          <span>{selectedCountry.country_code}</span>
+                          <FiChevronDown className="text-[#71717a]" />
+                        </button>
+
+                        {countryOpen && (
+                          <div className="absolute left-0 z-20 mt-1 w-64 overflow-hidden rounded-lg border border-[#e4e4e7] bg-white shadow-lg">
+                            <input
+                              type="text"
+                              autoFocus
+                              placeholder="Search country or code"
+                              value={countrySearch}
+                              onChange={(e) => setCountrySearch(e.target.value)}
+                              className="w-full border-b border-[#e4e4e7] px-3 py-2 text-sm outline-none"
+                            />
+                            <div className="max-h-56 overflow-y-auto">
+                              {filteredCountries.length === 0 && (
+                                <p className="px-3 py-2 text-sm text-[#a1a1aa]">
+                                  No matches
+                                </p>
+                              )}
+                              {filteredCountries.map((c) => (
+                                <button
+                                  key={c.id}
+                                  type="button"
+                                  onClick={() => handleSelectCountry(c)}
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[#f4f4f5]"
+                                >
+                                  <span className="text-base leading-none">
+                                    {c.flag_emoji}
+                                  </span>
+                                  <span className="truncate">{c.name}</span>
+                                  <span className="ml-auto shrink-0 text-[#71717a]">
+                                    {c.country_code}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        autoComplete="tel-national"
+                        placeholder="234 567 890"
+                        value={form.phone}
+                        onChange={handleChange}
+                        className={inputClass("phone")}
+                      />
+                    </div>
                     {errors.phone && (
                       <p className="text-xs text-[#ef4444]">{errors.phone}</p>
                     )}
