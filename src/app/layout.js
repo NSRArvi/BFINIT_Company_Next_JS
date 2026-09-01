@@ -4,6 +4,7 @@ import Footer from "@/components/shared/Footer";
 import Chatbot from "@/components/Chatbot/Chatbot";
 import AuthProvider from "@/provider/AuthProvider";
 import "./globals.css";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -36,6 +37,7 @@ export default function RootLayout({ children }) {
           <Footer />
           {/* chatting feature script */}
           {/* <Chatbot /> */}
+          <Toaster />
         </body>
       </AuthProvider>
     </html>
