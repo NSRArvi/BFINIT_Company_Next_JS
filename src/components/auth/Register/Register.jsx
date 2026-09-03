@@ -289,7 +289,7 @@ export default function Register() {
 
     clearPending();
     saveAuth(data);
-    navigate.push("/");
+    navigate.push("/login");
   };
 
   const clearPending = () => sessionStorage.removeItem(SESSION_KEY);

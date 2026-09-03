@@ -12,10 +12,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ExternalLink, LogOut } from "lucide-react";
+import { ECOM_BASE_URL } from "@/config";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, token } = useAuth();
   const [showNav, setShowNav] = useState(false);
   const [showChild, setShowChild] = useState("");
   const [showSubMenu, setShowSubMenu] = useState(null);
@@ -39,6 +40,40 @@ export default function Navbar() {
 
     fetchHostingProducts();
   }, []);
+
+  useEffect(() => {
+    async function checkAuth() {
+      if (!token) return;
+
+      try {
+        const res = await fetch(
+          `${ECOM_BASE_URL}/api/v1/package-order/user-orders`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+
+        if (res.status === 401) {
+          logout();
+          setUserMenuOpen(false);
+          return;
+        }
+        if (!res.ok) throw new Error("Failed to fetch orders");
+      } catch (err) {
+        console.error(err.message);
+      }
+    }
+
+    checkAuth();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        checkAuth();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
+  }, [token, logout]);
 
   // Update the MenuItems when hostingProducts changes
   useEffect(() => {

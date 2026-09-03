@@ -14,7 +14,7 @@ const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
 export default function CheckoutForm({ details, currencies, bankInfo }) {
   const navigate = useRouter();
-  const { token, loading } = useAuth();
+  const { token, loading, logout } = useAuth();
 
   const [paymentMethod, setPaymentMethod] = useState("bank");
   const [slipFile, setSlipFile] = useState(null);
@@ -143,6 +143,15 @@ export default function CheckoutForm({ details, currencies, bankInfo }) {
         }
       } else {
         console.error("Order failed:", data);
+        if (
+          data?.success === false &&
+          (data?.message === "Your account not found. Please log in again." ||
+            data?.message ===
+              "Your account is inactive. Please contact support.")
+        ) {
+          logout();
+          navigate.push("/login");
+        }
       }
     } catch (err) {
       console.error("Submit error:", err);
