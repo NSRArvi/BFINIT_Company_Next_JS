@@ -48,6 +48,8 @@ export default function StripeCardForm({
       },
     );
 
+    console.log(paymentIntent);
+
     if (error) {
       setErrorMsg(error.message);
       setIsProcessing(false);
@@ -59,6 +61,7 @@ export default function StripeCardForm({
   };
 
   const amount = orderData?.invoice?.payment_amount;
+  console.log(orderData);
 
   return (
     <div className="space-y-6">
@@ -66,7 +69,8 @@ export default function StripeCardForm({
       <button
         type="button"
         onClick={onBack}
-        className="flex items-center gap-1.5 text-xs font-semibold text-[#186BB5] hover:underline">
+        className="flex items-center gap-1.5 text-xs font-semibold text-[#186BB5] hover:underline"
+      >
         <ArrowLeft size={13} /> Back to order
       </button>
 
@@ -89,7 +93,8 @@ export default function StripeCardForm({
               cardFocused
                 ? "border-[#186BB5] ring-2 ring-[#186BB5]/10"
                 : "border-gray-200"
-            } bg-white`}>
+            } bg-white`}
+          >
             <CardElement
               options={CARD_ELEMENT_OPTIONS}
               onFocus={() => setCardFocused(true)}
@@ -105,7 +110,8 @@ export default function StripeCardForm({
             {["visa", "mastercard", "amex"].map((card) => (
               <span
                 key={card}
-                className="rounded border border-gray-200 bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                className="rounded border border-gray-200 bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gray-500"
+              >
                 {card}
               </span>
             ))}
@@ -130,7 +136,8 @@ export default function StripeCardForm({
         <button
           type="submit"
           disabled={isProcessing || !stripe || !elements}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#186BB5] py-3.5 text-sm font-bold text-white transition-colors hover:bg-[#145fa0] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60">
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#186BB5] py-3.5 text-sm font-bold text-white transition-colors hover:bg-[#145fa0] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+        >
           <Lock size={13} />
           {isProcessing
             ? "Processing…"

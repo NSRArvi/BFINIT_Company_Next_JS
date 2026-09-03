@@ -349,7 +349,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className={`h-fit rounded-full border px-4 py-2 font-medium transition-all duration-300 ease-linear ${isScrolled || !isHome ? "border-brand/25 text-black hover:bg-gray-100" : "border-white/40 bg-white/20 text-black hover:bg-white/40"}`}
+                className={`h-fit rounded-full border px-4 py-2 font-medium transition-all duration-300 ease-linear bg-brand text-white `}
               >
                 Login
               </Link>

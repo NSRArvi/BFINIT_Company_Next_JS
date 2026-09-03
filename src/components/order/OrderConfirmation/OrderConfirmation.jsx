@@ -8,7 +8,6 @@ import {
   ExternalLink,
   Copy,
   Check,
-  Download,
   CreditCard,
 } from "lucide-react";
 
@@ -57,12 +56,14 @@ export default function OrderConfirmation({ invoice }) {
 
     const fetchOrder = async () => {
       try {
+        setLoading(true);
         const res = await fetch(
           `${ECOM_BASE_URL}/api/v1/package-order/user-order?invoice_number=${invoice}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
+            cache: "no-store",
           },
         );
 
@@ -99,7 +100,7 @@ export default function OrderConfirmation({ invoice }) {
   const isStripe = invoices?.payment_method === "stripe";
   const currency = (upgrade?.currency ?? "EUR").toUpperCase();
   const totalPaid = invoices?.payment_amount ?? upgrade?.amount;
-  const isSettled = order.status === "active" || invoices?.status === "paid";
+  const isSettled = invoices?.status === "paid";
   const showPanelCta = isSettled;
 
   return (
