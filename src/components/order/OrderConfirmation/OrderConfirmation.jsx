@@ -21,6 +21,7 @@ import formatDateTime from "@/utils/formateDateTime";
 import formatCurrency from "@/utils/formatCurrency";
 import Container from "@/components/shared/Container";
 import Link from "next/link";
+import { handleUnauthorized } from "@/lib/auth";
 
 function CopyValue({ value }) {
   const [copied, setCopied] = useState(false);
@@ -61,12 +62,14 @@ export default function OrderConfirmation({ invoice }) {
           {
             headers: {
               Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
             },
           },
         );
+
+        handleUnauthorized(res);
+        if (!res.ok) throw new Error("Failed to fetch order details");
+
         const json = await res.json();
-        if (!json.success) throw new Error(json.message ?? "Fetch failed");
         setOrder(json.data);
       } catch (err) {
         setError(err.message);

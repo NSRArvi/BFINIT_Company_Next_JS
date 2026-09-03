@@ -7,6 +7,7 @@ import OrderTableSkeleton from "../../skeletons/OrderTableSkeleton/OrderTableSke
 import { useRouter } from "next/navigation";
 import Container from "@/components/shared/Container";
 import OrderTable from "./OrderTable";
+import { handleUnauthorized } from "@/lib/auth";
 
 export default function MyOrders() {
   const { token, user } = useAuth();
@@ -32,8 +33,10 @@ export default function MyOrders() {
             },
           },
         );
-        if (!res.ok)
-          throw new Error(`Request failed with status ${res.status}`);
+
+        handleUnauthorized(res);
+        if (!res.ok) throw new Error("Failed to fetch orders");
+
         const data = await res.json();
         if (data.success) {
           setOrders(data.data);

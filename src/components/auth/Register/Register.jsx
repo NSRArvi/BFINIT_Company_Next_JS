@@ -251,7 +251,7 @@ export default function Register() {
     // If backend doesn't require OTP, finish immediately
     clearPending();
     saveAuth(data);
-    navigate.push("/");
+    navigate.push("/login");
   };
 
   // ─── Step 2: Verify OTP ────────────────────────────────────────────────────

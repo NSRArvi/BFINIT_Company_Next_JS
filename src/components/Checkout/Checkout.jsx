@@ -6,6 +6,8 @@ import Container from "../shared/Container";
 import Heading from "./Heading";
 import CheckoutForm from "./CheckoutForm";
 import CheckoutSkeleton from "../loader/CheckoutSkeleton";
+import { handleUnauthorized } from "@/lib/auth";
+import useAuth from "@/hooks/useAuth";
 
 const currencies = [
   {
@@ -35,6 +37,7 @@ const currencies = [
 ];
 
 export default function Checkout() {
+  const { token } = useAuth();
   const { id, duration } = useParams();
   const [packDetails, setPackDetails] = useState(null);
   const [bankInfo, setBankInfo] = useState(null);
@@ -46,26 +49,47 @@ export default function Checkout() {
       setLoadingPack(true);
       const res = await fetch(
         `${ECOM_BASE_URL}/api/v1/package/get-single/${id}/${duration}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
+
+      handleUnauthorized(res);
+      if (!res.ok) throw new Error("Failed to fetch orders");
+
       const data = await res.json();
       if (data?.success) setPackDetails(data?.data);
       setLoadingPack(false);
     };
+
     fetchPackageDetails();
-  }, [id, duration]);
+  }, [id, duration, token]);
 
   useEffect(() => {
     const fetchBankInfo = async () => {
       setLoadingBank(true);
       const res = await fetch(
         `${ECOM_BASE_URL}/api/v1/platform-bank-payment/get-all`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
+
+      handleUnauthorized(res);
+      if (!res.ok)
+        throw new Error("Failed to fetch platform bank payment info");
+
       const data = await res.json();
       if (data?.success && data?.data?.length > 0) setBankInfo(data?.data[0]);
       setLoadingBank(false);
     };
+
     fetchBankInfo();
-  }, []);
+  }, [token]);
 
   const loading = loadingPack || loadingBank;
 

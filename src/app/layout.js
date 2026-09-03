@@ -1,7 +1,6 @@
 import { Inter, Roboto } from "next/font/google";
 import Navbar from "@/components/shared/Navbar";
 import Footer from "@/components/shared/Footer";
-import Chatbot from "@/components/Chatbot/Chatbot";
 import AuthProvider from "@/provider/AuthProvider";
 import "./globals.css";
 

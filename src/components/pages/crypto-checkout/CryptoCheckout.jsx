@@ -17,6 +17,7 @@ import { ECOM_BASE_URL } from "@/config";
 import { formatTokenAmount } from "@/utils/formatTokenAmount";
 import CryptoCheckoutSkeleton from "@/components/skeletons/CryptoCheckoutSkeleton";
 import useAuth from "@/hooks/useAuth";
+import { handleUnauthorized } from "@/lib/auth";
 
 const MINT_ADDRESS = process.env.NEXT_PUBLIC_SPUMP_MINT_ADDRESS;
 const RECEIVER_ADDRESS = process.env.NEXT_PUBLIC_RECEIVER_ADDRESS;
@@ -63,8 +64,16 @@ export default function CryptoCheckout() {
       try {
         const res = await fetch(
           `${ECOM_BASE_URL}/api/v1/package/get-single/${packageId}/${durationQuery}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
         );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        handleUnauthorized(res);
+        if (!res.ok) throw new Error("Failed to fetch orders");
+
         const data = await res.json();
         if (data?.success) setPackDetails(data?.data);
       } catch (e) {
@@ -75,7 +84,7 @@ export default function CryptoCheckout() {
     };
 
     fetchPackageDetails();
-  }, [packageId, durationQuery]);
+  }, [packageId, durationQuery, token]);
 
   // fetch eur to usd rate
   useEffect(() => {

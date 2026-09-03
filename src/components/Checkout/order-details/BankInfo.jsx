@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { CheckCheck, Copy, Landmark } from "lucide-react";
 import { ECOM_BASE_URL } from "@/config";
+import useAuth from "@/hooks/useAuth";
+import { handleUnauthorized } from "@/lib/auth";
 
 const FIELD_CONFIG = [
   { key: "account_name", label: "ACCOUNT NAME" },
@@ -58,6 +60,7 @@ function BankCard({ bank }) {
 }
 
 export default function BankInfo() {
+  const { token } = useAuth();
   const [loadingBank, setLoadingBank] = useState(true);
   const [bankInfo, setBankInfo] = useState([]);
 
@@ -65,7 +68,16 @@ export default function BankInfo() {
     setLoadingBank(true);
     const res = await fetch(
       `${ECOM_BASE_URL}/api/v1/platform-bank-payment/get-all`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
     );
+
+    handleUnauthorized(res);
+    if (!res.ok) throw new Error("Failed to fetch orders");
+
     const data = await res.json();
     if (data?.success && data?.data?.length > 0) setBankInfo(data?.data);
     setLoadingBank(false);
