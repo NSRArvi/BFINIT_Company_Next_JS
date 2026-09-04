@@ -9,6 +9,7 @@ import { ECOM_BASE_URL, STRIPE_PUBLISHABLE_KEY } from "@/config";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import OrderDetailsSkeleton from "../skeletons/OrderDetailsSkeleton/OrderDetailsSkeleton";
+import toast from "react-hot-toast";
 
 const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
@@ -119,6 +120,14 @@ export default function CheckoutForm({ details, currencies, bankInfo }) {
       );
 
       const data = await res.json();
+
+      if (data?.success) {
+        toast.success("Order created successfully!");
+      } else {
+        toast.error(
+          data?.message || "Failed to create order. Please try again.",
+        );
+      }
 
       if (data?.success) {
         if (isCryptoCurrencySelected) {
