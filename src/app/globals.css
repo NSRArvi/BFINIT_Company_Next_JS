@@ -51,8 +51,12 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 }
+
 @theme {
   --color-brand: #186bb5;
+  --color-dark: #111827;
+  --color-softGray: #e5e7eb;
+  --color-custom-gray: #6b7280;
 }
 
 :root {
