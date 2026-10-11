@@ -8,6 +8,7 @@ import CheckoutForm from "./CheckoutForm";
 import CheckoutSkeleton from "../loader/CheckoutSkeleton";
 import { handleUnauthorized } from "@/lib/auth";
 import useAuth from "@/hooks/useAuth";
+import TrialCheckout from "./TrialCheckout";
 
 const currencies = [
   {
@@ -43,6 +44,8 @@ export default function Checkout() {
   const [bankInfo, setBankInfo] = useState(null);
   const [loadingPack, setLoadingPack] = useState(true);
   const [loadingBank, setLoadingBank] = useState(true);
+
+  const isTrial = packDetails?.package_type_label?.toLowerCase() === "trial";
 
   useEffect(() => {
     const fetchPackageDetails = async () => {
@@ -96,12 +99,18 @@ export default function Checkout() {
   let content = null;
 
   if (loading) {
-    content = <CheckoutSkeleton />;
-  }
-
-  if (!loading && packDetails?.id) {
     content = (
       <section>
+        <Heading currencies={currencies} />
+        <CheckoutSkeleton />
+      </section>
+    );
+  }
+
+  if (!loading && packDetails?.id && !isTrial) {
+    content = (
+      <section>
+        <Heading currencies={currencies} />
         <CheckoutForm
           details={packDetails}
           currencies={currencies}
@@ -111,12 +120,17 @@ export default function Checkout() {
     );
   }
 
+  if (!loading && packDetails?.id && isTrial) {
+    content = (
+      <section>
+        <TrialCheckout details={packDetails} />
+      </section>
+    );
+  }
+
   return (
     <section className="pt-28">
-      <Container>
-        <Heading currencies={currencies} />
-        {content}
-      </Container>
+      <Container>{content}</Container>
     </section>
   );
 }

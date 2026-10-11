@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Building2, CreditCard, Bitcoin, Eye } from "lucide-react";
+import { Building2, CreditCard, Bitcoin, Eye, Gift } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,14 +21,24 @@ function formatDate(dateStr) {
   });
 }
 
+function formatAmount(value) {
+  const n = Number(value);
+  if (Number.isNaN(n)) return "0";
+  return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
+
+const METHODS = {
+  bank_transfer: { icon: Building2, label: "Bank" },
+  stripe: { icon: CreditCard, label: "Stripe" },
+  solana: { icon: Bitcoin, label: "Crypto" },
+  trial: { icon: Gift, label: "Free trial" },
+};
+
 function PaymentMethod({ method }) {
-  const config = {
-    bank_transfer: { icon: Building2, label: "Bank" },
-    stripe: { icon: CreditCard, label: "Stripe" },
-  }[method] ?? { icon: Bitcoin, label: "Crypto" };
+  const config = METHODS[method];
+  if (!config) return <span className="text-sm text-muted-foreground">—</span>;
 
   const Icon = config.icon;
-
   return (
     <div className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
       <Icon size={14} />
@@ -37,114 +47,176 @@ function PaymentMethod({ method }) {
   );
 }
 
-function StatusDot({ status }) {
-  const isSettled = status === "paid" || status === "active";
+function StatusDot({ label, tone, note }) {
+  const dot = {
+    good: "bg-brand",
+    muted: "bg-muted-foreground",
+    expired: "bg-red-500",
+  }[tone];
+
   return (
-    <div className="inline-flex items-center gap-1.5">
-      <span
-        className={`h-1.5 w-1.5 rounded-full ${
-          isSettled ? "bg-brand" : "bg-muted-foreground"
-        }`}
-      />
-      <span
-        className={`text-sm capitalize ${
-          isSettled ? "text-foreground" : "text-muted-foreground"
-        }`}
-      >
-        {status}
-      </span>
+    <div>
+      <div className="inline-flex items-center gap-1.5">
+        <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+        <span
+          className={`text-sm capitalize ${
+            tone === "good" ? "text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          {label}
+        </span>
+      </div>
+      {note && (
+        <p className="mt-0.5 text-[11px] text-muted-foreground">{note}</p>
+      )}
     </div>
   );
 }
 
-export default function OrderTable({ orders = [] }) {
-  const formattedOrders = orders.map((order) => {
-    const amount = Number(order.packageInvoice?.payment_amount);
+function getRow(order) {
+  const invoice = order.packageInvoice;
+  const isTrial = invoice?.payment_method === "trial";
+
+  const base = {
+    key: invoice?.id ?? order.id,
+    invoiceNumber: invoice?.invoice_number,
+    orderedAt: invoice?.created_at ?? order.created_at,
+    method: invoice?.payment_method,
+    isTrial,
+  };
+
+  if (isTrial) {
+    const days =
+      order.start_at && order.expire_at
+        ? Math.round(
+            (new Date(order.expire_at) - new Date(order.start_at)) / 86400000,
+          )
+        : null;
+    const expired =
+      order.status === "expired" ||
+      (order.expire_at && new Date(order.expire_at) < new Date());
+
     return {
-      ...order,
-      formattedAmount: Number.isInteger(amount) ? amount : amount.toFixed(2),
-      duration: order.subscriptionPeriod?.duration === 1 ? "month" : "year",
+      ...base,
+      expired,
+      price: days ? `Free · ${days}d` : "Free",
+      status: expired
+        ? {
+            label: "Expired",
+            tone: "expired",
+            note: `Ended ${formatDate(order.expire_at)}`,
+          }
+        : {
+            label: "Active",
+            tone: "good",
+            note: `Ends ${formatDate(order.expire_at)}`,
+          },
     };
-  });
+  }
+
+  const settled = invoice?.status === "paid" || invoice?.status === "active";
+  return {
+    ...base,
+    expired: false,
+    price: `€${formatAmount(invoice?.payment_amount)}`,
+    unit: order.subscriptionPeriod?.duration === 1 ? "month" : "year",
+    status: {
+      label: invoice?.status ?? "pending",
+      tone: settled ? "good" : "muted",
+    },
+  };
+}
+
+export default function OrderTable({ orders = [] }) {
+  const rows = orders.map((order) => ({ order, row: getRow(order) }));
 
   return (
     <div className="overflow-x-auto rounded-lg bg-card">
-      <Table className="w-full table-fixed">
+      <Table className="w-full min-w-[800px] table-fixed">
         <TableHeader>
           <TableRow className="border-border hover:bg-transparent">
             <TableHead className="h-10 w-[14%] text-xs font-medium text-muted-foreground">
               Invoice
             </TableHead>
-            <TableHead className="w-[22%] text-xs font-medium text-muted-foreground">
+            <TableHead className="w-[18%] text-xs font-medium text-muted-foreground">
               Package
             </TableHead>
-            <TableHead className="w-[14%] text-xs font-medium text-muted-foreground">
+            <TableHead className="w-[13%] text-xs font-medium text-muted-foreground">
               Price
             </TableHead>
-            <TableHead className="w-[14%] text-xs font-medium text-muted-foreground">
+            <TableHead className="w-[13%] text-xs font-medium text-muted-foreground">
               Ordered
             </TableHead>
-            <TableHead className="w-[12%] text-xs font-medium text-muted-foreground">
+            <TableHead className="w-[13%] text-xs font-medium text-muted-foreground">
               Method
             </TableHead>
-            <TableHead className="w-[12%] text-xs font-medium text-muted-foreground">
+            <TableHead className="w-[15%] text-xs font-medium text-muted-foreground">
               Status
             </TableHead>
-            <TableHead className="w-[10%] text-right text-xs font-medium text-muted-foreground">
+            <TableHead className="w-[14%] text-right text-xs font-medium text-muted-foreground">
               Action
             </TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
-          {formattedOrders.length > 0 ? (
-            formattedOrders.map((order, index) => (
-              <TableRow key={index} className="hover:bg-muted/40">
+          {rows.length > 0 ? (
+            rows.map(({ order, row }) => (
+              <TableRow key={row.key} className="hover:bg-muted/40">
                 <TableCell className="truncate py-3.5 font-mono text-sm text-foreground">
-                  #{order.packageInvoice?.invoice_number}
+                  #{row.invoiceNumber}
                 </TableCell>
 
                 <TableCell className="truncate text-sm text-foreground">
-                  {order.package?.package_type}
+                  {order.package?.package_name}
                 </TableCell>
 
                 <TableCell className="truncate">
                   <span className="text-sm font-medium text-foreground">
-                    €{order.formattedAmount}
+                    {row.price}
                   </span>
-                  <span className="ml-1 text-xs text-muted-foreground">
-                    /{order.duration}
-                  </span>
+                  {row.unit && (
+                    <span className="ml-1 text-xs text-muted-foreground">
+                      /{row.unit}
+                    </span>
+                  )}
                 </TableCell>
 
                 <TableCell className="truncate text-sm text-muted-foreground">
-                  {formatDate(order.created_at)}
+                  {formatDate(row.orderedAt)}
                 </TableCell>
 
                 <TableCell className="truncate">
-                  <PaymentMethod
-                    method={order.packageInvoice?.payment_method}
-                  />
+                  <PaymentMethod method={row.method} />
                 </TableCell>
 
-                <TableCell className="truncate">
-                  <StatusDot status={order.packageInvoice?.status} />
+                <TableCell>
+                  <StatusDot {...row.status} />
                 </TableCell>
 
                 <TableCell className="text-right">
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs"
-                  >
-                    <Link
-                      href={`/my-orders/${order.packageInvoice?.invoice_number}`}
+                  <div className="inline-flex items-center gap-1.5">
+                    {row.isTrial && row.expired && (
+                      <Button
+                        asChild
+                        size="sm"
+                        className="h-8 bg-brand text-xs text-white hover:bg-brand/90"
+                      >
+                        <Link href="/#pricing">Upgrade</Link>
+                      </Button>
+                    )}
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
                     >
-                      <Eye size={13} />
-                      View
-                    </Link>
-                  </Button>
+                      <Link href={`/my-orders/${row.invoiceNumber}`}>
+                        <Eye size={13} />
+                        View
+                      </Link>
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))

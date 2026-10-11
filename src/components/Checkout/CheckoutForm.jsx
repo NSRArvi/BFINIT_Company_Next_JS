@@ -164,6 +164,7 @@ export default function CheckoutForm({ details, currencies, bankInfo }) {
       }
     } catch (err) {
       console.error("Submit error:", err);
+      toast.error("An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
