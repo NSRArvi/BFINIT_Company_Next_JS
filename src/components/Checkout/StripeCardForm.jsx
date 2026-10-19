@@ -48,8 +48,6 @@ export default function StripeCardForm({
       },
     );
 
-    console.log(paymentIntent);
-
     if (error) {
       setErrorMsg(error.message);
       setIsProcessing(false);
@@ -61,7 +59,6 @@ export default function StripeCardForm({
   };
 
   const amount = orderData?.invoice?.payment_amount;
-  console.log(orderData);
 
   return (
     <div className="space-y-6">

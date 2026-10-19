@@ -170,8 +170,36 @@ export default function CheckoutForm({ details, currencies, bankInfo }) {
     }
   };
 
-  const handleStripeSuccess = () => {
-    const invoice_number = pendingOrderData.invoice.invoice_number;
+  const handleStripeSuccess = async (paymentIntent) => {
+    const invoice_number = pendingOrderData?.invoice?.invoice_number;
+
+    try {
+      const res = await fetch(
+        `${ECOM_BASE_URL}/api/v1/package-order/payment/verify-stripe`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            paymentIntentId: paymentIntent?.id,
+            invoiceNumber: invoice_number,
+          }),
+        },
+      );
+      const data = await res.json();
+
+      if (!data?.success) {
+        toast.error(data?.message || "Payment verification failed.");
+        return;
+      }
+    } catch (err) {
+      console.error("Verify error:", err);
+      toast.error("Could not verify payment. Please contact support.");
+      return;
+    }
+
     navigate.push(`/order-confirmation/${invoice_number}`);
   };
 
