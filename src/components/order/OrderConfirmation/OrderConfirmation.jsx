@@ -10,6 +10,7 @@ import {
   Check,
   CreditCard,
 } from "lucide-react";
+import logo from "../../../assets/logo/eblogo.png";
 
 import useAuth from "@/hooks/useAuth";
 import { ECOM_BASE_URL } from "@/config";
@@ -21,6 +22,7 @@ import formatCurrency from "@/utils/formatCurrency";
 import Container from "@/components/shared/Container";
 import Link from "next/link";
 import { handleUnauthorized } from "@/lib/auth";
+import Image from "next/image";
 
 function CopyValue({ value }) {
   const [copied, setCopied] = useState(false);
@@ -142,7 +144,14 @@ export default function OrderConfirmation({ invoice }) {
           {/* Header */}
           <div className="flex items-start justify-between border-b border-border px-8 py-7">
             <div>
-              <p className="text-lg font-bold text-foreground">eBfinit</p>
+              <Image
+                width={1000}
+                height={1000}
+                src={logo}
+                className="h-5 w-auto md:h-6"
+                alt="Bfinit Company Logo"
+                priority
+              />
               <p className="mt-1 text-xs text-muted-foreground">
                 8 rue de Dublin, 34200, Sète, France
               </p>

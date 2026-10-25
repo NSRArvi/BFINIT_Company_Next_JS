@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Package, XCircle } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
 import { ECOM_BASE_URL } from "@/config";
@@ -17,41 +17,35 @@ export default function MyOrders() {
   const [meta, setMeta] = useState(null);
   const router = useRouter();
 
+  const fetchOrders = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `${ECOM_BASE_URL}/api/v1/package-order/user-orders`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      handleUnauthorized(res);
+      if (!res.ok) throw new Error("Failed to fetch orders");
+      const data = await res.json();
+      if (!data.success)
+        throw new Error(data.message || "Failed to fetch orders");
+      setOrders(data.data);
+      setMeta(data.meta);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (!token || !user) {
       router.replace("/login");
       return;
     }
-    async function fetchOrders() {
-      try {
-        setLoading(true);
-        const res = await fetch(
-          `${ECOM_BASE_URL}/api/v1/package-order/user-orders`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-
-        handleUnauthorized(res);
-        if (!res.ok) throw new Error("Failed to fetch orders");
-
-        const data = await res.json();
-        if (data.success) {
-          setOrders(data.data);
-          setMeta(data.meta);
-        } else {
-          throw new Error(data.message || "Failed to fetch orders");
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchOrders();
-  }, [token, router, user]);
+    setLoading(true);
+    fetchOrders().finally(() => setLoading(false));
+  }, [token, user, router, fetchOrders]);
 
   return (
     <Container>
@@ -103,7 +97,7 @@ export default function MyOrders() {
           )}
 
           {!loading && !error && orders.length > 0 && (
-            <OrderTable orders={orders} />
+            <OrderTable orders={orders} onRefresh={fetchOrders} />
           )}
         </div>
       </div>

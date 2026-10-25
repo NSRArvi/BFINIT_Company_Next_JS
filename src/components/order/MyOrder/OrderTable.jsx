@@ -1,7 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { Building2, CreditCard, Bitcoin, Eye, Gift } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,6 +10,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ECOM_BASE_URL } from "@/config";
+import useAuth from "@/hooks/useAuth";
+import { handleUnauthorized } from "@/lib/auth";
+import RepayStripeDialog from "@/components/modals/RepayStripeDialog";
+import toast from "react-hot-toast";
+
+function getPayHref(order, invoice) {
+  if (invoice?.status !== "pending" || invoice.payment_method !== "solana") {
+    return null;
+  }
+  return `/checkout/crypto/${order.package?.id}/${order.subscriptionPeriod?.duration}/${invoice.invoice_number}?discount=30`;
+}
 
 function formatDate(dateStr) {
   if (!dateStr) return "—";
@@ -118,6 +129,9 @@ function getRow(order) {
   return {
     ...base,
     expired: false,
+    payHref: getPayHref(order, invoice),
+    canRepayStripe:
+      invoice?.status === "pending" && invoice?.payment_method === "stripe",
     price: `€${formatAmount(invoice?.payment_amount)}`,
     unit: order.subscriptionPeriod?.duration === 1 ? "month" : "year",
     status: {
@@ -127,111 +141,194 @@ function getRow(order) {
   };
 }
 
-export default function OrderTable({ orders = [] }) {
+export default function OrderTable({ orders = [], onRefresh }) {
+  const { token } = useAuth();
+  const [payment, setPayment] = useState(null);
+  const [repayingId, setRepayingId] = useState(null);
   const rows = orders.map((order) => ({ order, row: getRow(order) }));
 
+  const handleRepay = async (order) => {
+    const invoiceNumber = order.packageInvoice.invoice_number;
+    setRepayingId(invoiceNumber);
+    try {
+      const res = await fetch(
+        `${ECOM_BASE_URL}/api/v1/package-order/retry-payment/${invoiceNumber}`,
+        { method: "POST", headers: { Authorization: `Bearer ${token}` } },
+      );
+      handleUnauthorized(res);
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Could not retry payment");
+      }
+      setPayment(data.data);
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setRepayingId(null);
+    }
+  };
+
+  const handleVerified = async (paymentIntent, invoiceNumber) => {
+    try {
+      const res = await fetch(
+        `${ECOM_BASE_URL}/api/v1/package-order/payment/verify-stripe`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            paymentIntentId: paymentIntent?.id,
+            invoiceNumber,
+          }),
+        },
+      );
+      const data = await res.json();
+      if (!data?.success) {
+        toast.error(data?.message || "Payment verification failed.");
+        return;
+      }
+      setPayment(null);
+      toast.success("Payment successful!");
+      await onRefresh?.();
+    } catch {
+      toast.error("Could not verify payment. Please contact support.");
+    }
+  };
+
   return (
-    <div className="overflow-x-auto rounded-lg bg-card">
-      <Table className="w-full min-w-[800px] table-fixed">
-        <TableHeader>
-          <TableRow className="border-border hover:bg-transparent">
-            <TableHead className="h-10 w-[14%] text-xs font-medium text-muted-foreground">
-              Invoice
-            </TableHead>
-            <TableHead className="w-[18%] text-xs font-medium text-muted-foreground">
-              Package
-            </TableHead>
-            <TableHead className="w-[13%] text-xs font-medium text-muted-foreground">
-              Price
-            </TableHead>
-            <TableHead className="w-[13%] text-xs font-medium text-muted-foreground">
-              Ordered
-            </TableHead>
-            <TableHead className="w-[13%] text-xs font-medium text-muted-foreground">
-              Method
-            </TableHead>
-            <TableHead className="w-[15%] text-xs font-medium text-muted-foreground">
-              Status
-            </TableHead>
-            <TableHead className="w-[14%] text-right text-xs font-medium text-muted-foreground">
-              Action
-            </TableHead>
-          </TableRow>
-        </TableHeader>
+    <>
+      {" "}
+      <div className="overflow-x-auto rounded-lg bg-card">
+        <Table className="w-full min-w-[800px] table-fixed">
+          <TableHeader>
+            <TableRow className="border-border hover:bg-transparent">
+              <TableHead className="h-10 w-[14%] text-xs font-medium text-muted-foreground">
+                Invoice
+              </TableHead>
+              <TableHead className="w-[18%] text-xs font-medium text-muted-foreground">
+                Package
+              </TableHead>
+              <TableHead className="w-[13%] text-xs font-medium text-muted-foreground">
+                Price
+              </TableHead>
+              <TableHead className="w-[13%] text-xs font-medium text-muted-foreground">
+                Ordered
+              </TableHead>
+              <TableHead className="w-[13%] text-xs font-medium text-muted-foreground">
+                Method
+              </TableHead>
+              <TableHead className="w-[15%] text-xs font-medium text-muted-foreground">
+                Status
+              </TableHead>
+              <TableHead className="w-[14%] text-right text-xs font-medium text-muted-foreground">
+                Action
+              </TableHead>
+            </TableRow>
+          </TableHeader>
 
-        <TableBody>
-          {rows.length > 0 ? (
-            rows.map(({ order, row }) => (
-              <TableRow key={row.key} className="hover:bg-muted/40">
-                <TableCell className="truncate py-3.5 font-mono text-sm text-foreground">
-                  #{row.invoiceNumber}
-                </TableCell>
+          <TableBody>
+            {rows.length > 0 ? (
+              rows.map(({ order, row }) => (
+                <TableRow key={row.key} className="hover:bg-muted/40">
+                  <TableCell className="truncate py-3.5 font-mono text-sm text-foreground">
+                    #{row.invoiceNumber}
+                  </TableCell>
 
-                <TableCell className="truncate text-sm text-foreground">
-                  {order.package?.package_name}
-                </TableCell>
+                  <TableCell className="truncate text-sm text-foreground">
+                    {order.package?.package_name}
+                  </TableCell>
 
-                <TableCell className="truncate">
-                  <span className="text-sm font-medium text-foreground">
-                    {row.price}
-                  </span>
-                  {row.unit && (
-                    <span className="ml-1 text-xs text-muted-foreground">
-                      /{row.unit}
+                  <TableCell className="truncate">
+                    <span className="text-sm font-medium text-foreground">
+                      {row.price}
                     </span>
-                  )}
-                </TableCell>
-
-                <TableCell className="truncate text-sm text-muted-foreground">
-                  {formatDate(row.orderedAt)}
-                </TableCell>
-
-                <TableCell className="truncate">
-                  <PaymentMethod method={row.method} />
-                </TableCell>
-
-                <TableCell>
-                  <StatusDot {...row.status} />
-                </TableCell>
-
-                <TableCell className="text-right">
-                  <div className="inline-flex items-center gap-1.5">
-                    {row.isTrial && row.expired && (
-                      <Button
-                        asChild
-                        size="sm"
-                        className="h-8 bg-brand text-xs text-white hover:bg-brand/90"
-                      >
-                        <Link href="/#pricing">Upgrade</Link>
-                      </Button>
+                    {row.unit && (
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        /{row.unit}
+                      </span>
                     )}
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs"
-                    >
-                      <Link href={`/my-orders/${row.invoiceNumber}`}>
-                        <Eye size={13} />
-                        View
-                      </Link>
-                    </Button>
-                  </div>
+                  </TableCell>
+
+                  <TableCell className="truncate text-sm text-muted-foreground">
+                    {formatDate(row.orderedAt)}
+                  </TableCell>
+
+                  <TableCell className="truncate">
+                    <PaymentMethod method={row.method} />
+                  </TableCell>
+
+                  <TableCell>
+                    <StatusDot {...row.status} />
+                  </TableCell>
+
+                  <TableCell className="text-right">
+                    <div className="inline-flex items-center gap-1.5">
+                      {row.isTrial && row.expired && (
+                        <Button
+                          asChild
+                          size="sm"
+                          className="h-8 bg-brand text-xs text-white hover:bg-brand/90"
+                        >
+                          <Link href="/#pricing">Upgrade</Link>
+                        </Button>
+                      )}
+
+                      {row.payHref ? (
+                        <Button
+                          asChild
+                          size="sm"
+                          className="h-8 bg-brand text-xs text-white hover:bg-brand/90"
+                        >
+                          <Link href={row.payHref}>Repay</Link>
+                        </Button>
+                      ) : row.canRepayStripe ? (
+                        <Button
+                          onClick={() => handleRepay(order)}
+                          disabled={repayingId === row.invoiceNumber}
+                          size="sm"
+                          className="h-8 bg-brand text-xs text-white hover:bg-brand/90"
+                        >
+                          {repayingId === row.invoiceNumber
+                            ? "Loading..."
+                            : "Repay"}
+                        </Button>
+                      ) : (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs"
+                        >
+                          <Link href={`/my-orders/${row.invoiceNumber}`}>
+                            <Eye size={13} />
+                            View
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={7}
+                  className="h-40 text-center text-sm text-muted-foreground"
+                >
+                  No orders found.
                 </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={7}
-                className="h-40 text-center text-sm text-muted-foreground"
-              >
-                No orders found.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <RepayStripeDialog
+        payment={payment}
+        onClose={() => setPayment(null)}
+        onVerified={handleVerified}
+      />
+    </>
   );
 }
