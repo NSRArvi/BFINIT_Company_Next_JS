@@ -8,6 +8,8 @@ import { post, get } from "@/lib/api";
 import Container from "@/components/shared/Container";
 import { useRouter } from "next/navigation";
 
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,128}$/;
+
 const SESSION_KEY = "register_pending";
 const DEFAULT_COUNTRY = {
   id: 76,
@@ -20,6 +22,11 @@ const DEFAULT_COUNTRY = {
   currency_name: "Euro",
   abbreviation: "€",
 };
+
+// "+1-684" -> "+1684"
+const normalizeDial = (code) => "+" + code.replace(/\D/g, "");
+// digits only, no leading trunk zero
+const normalizePhone = (phone) => phone.replace(/\D/g, "").replace(/^0+/, "");
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -56,8 +63,6 @@ export default function Register() {
       const { data, ok } = await get("/api/v1/country");
       if (ok && data?.data?.length) {
         setCountries(data.data);
-        // Keep DEFAULT_COUNTRY unless you want to default to the API's first entry:
-        // setSelectedCountry(data.data.find((c) => c.iso2 === "US") || data.data[0]);
       }
     };
     fetchCountries();
@@ -123,23 +128,40 @@ export default function Register() {
       newErrors.name = "Name must be at least 2 characters.";
     }
 
+    const email = form.email.trim().toLowerCase();
+    const pwd = form.password.toLowerCase();
+    const emailLocal = email.split("@")[0];
+
     if (!form.email) {
       newErrors.email = "Email is required.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       newErrors.email = "Enter a valid email address.";
     }
 
-    // Phone is validated separately from the country code now
-    if (!form.phone) {
+    // Phone: digits only, optional single space/dash between digit groups
+    const phoneTrimmed = form.phone.trim();
+    const national = normalizePhone(form.phone);
+    const dialDigits = selectedCountry.country_code.replace(/\D/g, "");
+
+    if (!phoneTrimmed) {
       newErrors.phone = "Phone number is required.";
-    } else if (!/^[0-9\s\-().]{4,14}$/.test(form.phone)) {
+    } else if (!/^\d+([\s-]\d+)*$/.test(phoneTrimmed)) {
+      newErrors.phone = "Enter a valid phone number.";
+    } else if (
+      national.length < 6 ||
+      national.length > 14 ||
+      dialDigits.length + national.length > 15
+    ) {
       newErrors.phone = "Enter a valid phone number.";
     }
 
     if (!form.password) {
       newErrors.password = "Password is required.";
-    } else if (form.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters.";
+    } else if (!PASSWORD_REGEX.test(form.password)) {
+      newErrors.password =
+        "Use 8+ characters with at least one letter and one number.";
+    } else if (pwd === email || pwd === emailLocal) {
+      newErrors.password = "Password can't be the same as your email.";
     }
 
     if (!form.confirmPassword) {
@@ -159,6 +181,19 @@ export default function Register() {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+  };
+
+  const handlePhoneChange = (e) => {
+    const cleaned = e.target.value
+      .replace(/[^\d\s-]/g, "") // only digits, space, dash
+      .replace(/^[\s-]+/, "") // no leading separator
+      .replace(/([\s-])[\s-]+/g, "$1"); // collapse repeated separators
+    setForm((prev) => ({ ...prev, phone: cleaned }));
+    if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
+  };
+
+  const handlePhoneBlur = () => {
+    setForm((prev) => ({ ...prev, phone: prev.phone.replace(/[\s-]+$/, "") }));
   };
 
   const handleSelectCountry = (country) => {
@@ -215,8 +250,8 @@ export default function Register() {
     const payload = {
       name: form.name,
       email: form.email,
-      country_code: selectedCountry.country_code,
-      phone: form.phone.replace(/[\s\-().]/g, ""),
+      country_code: normalizeDial(selectedCountry.country_code),
+      phone: normalizePhone(form.phone),
       password: form.password,
     };
 
@@ -269,8 +304,10 @@ export default function Register() {
     const payload = {
       name: pending.name,
       email: pending.email,
-      country_code: pending.countryCode || selectedCountry.country_code,
-      phone: (pending.phone || "").replace(/[\s\-().]/g, ""),
+      country_code: normalizeDial(
+        pending.countryCode || selectedCountry.country_code,
+      ),
+      phone: normalizePhone(pending.phone || ""),
       password: pending.password,
       otp_code: otpCode,
     };
@@ -478,6 +515,7 @@ export default function Register() {
                         <button
                           type="button"
                           onClick={() => setCountryOpen((p) => !p)}
+                          aria-label={`Country code, ${selectedCountry.name} ${selectedCountry.country_code}`}
                           className="flex h-10 items-center gap-1.5 rounded-lg border border-[#e4e4e7] bg-white px-3 text-sm text-[#09090b] transition-colors hover:border-[#a1a1aa]"
                         >
                           <span className="text-base leading-none">
@@ -528,10 +566,12 @@ export default function Register() {
                         id="phone"
                         name="phone"
                         type="tel"
+                        inputMode="tel"
                         autoComplete="tel-national"
                         placeholder="234 567 890"
                         value={form.phone}
-                        onChange={handleChange}
+                        onChange={handlePhoneChange}
+                        onBlur={handlePhoneBlur}
                         className={inputClass("phone")}
                       />
                     </div>

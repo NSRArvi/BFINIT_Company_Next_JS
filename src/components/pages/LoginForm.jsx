@@ -29,8 +29,6 @@ export default function LoginForm() {
     }
     if (!form.password) {
       newErrors.password = "Password is required.";
-    } else if (form.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters.";
     }
     return newErrors;
   };
@@ -159,7 +157,13 @@ export default function LoginForm() {
               {/* Forgot password */}
               <div className="-mt-2 flex justify-end">
                 <Link
-                  href="/forgot-password"
+                  href={
+                    form.email.trim()
+                      ? `/forgot-password?email=${encodeURIComponent(
+                          form.email.trim(),
+                        )}`
+                      : "/forgot-password"
+                  }
                   className="text-xs text-brand hover:underline"
                 >
                   Forgot password?
