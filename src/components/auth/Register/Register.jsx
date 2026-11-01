@@ -26,7 +26,7 @@ const DEFAULT_COUNTRY = {
 // "+1-684" -> "+1684"
 const normalizeDial = (code) => "+" + code.replace(/\D/g, "");
 // digits only, no leading trunk zero
-const normalizePhone = (phone) => phone.replace(/\D/g, "").replace(/^0+/, "");
+const normalizePhone = (v) => (v || "").replace(/\D/g, "");
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -138,21 +138,9 @@ export default function Register() {
       newErrors.email = "Enter a valid email address.";
     }
 
-    // Phone: digits only, optional single space/dash between digit groups
-    const phoneTrimmed = form.phone.trim();
-    const national = normalizePhone(form.phone);
-    const dialDigits = selectedCountry.country_code.replace(/\D/g, "");
-
-    if (!phoneTrimmed) {
-      newErrors.phone = "Phone number is required.";
-    } else if (!/^\d+([\s-]\d+)*$/.test(phoneTrimmed)) {
-      newErrors.phone = "Enter a valid phone number.";
-    } else if (
-      national.length < 6 ||
-      national.length > 14 ||
-      dialDigits.length + national.length > 15
-    ) {
-      newErrors.phone = "Enter a valid phone number.";
+    if (form.phone.trim()) {
+      const len = normalizePhone(form.phone).length;
+      if (len < 2 || len > 17) newErrors.phone = "Enter a valid phone number.";
     }
 
     if (!form.password) {
@@ -184,16 +172,16 @@ export default function Register() {
   };
 
   const handlePhoneChange = (e) => {
-    const cleaned = e.target.value
-      .replace(/[^\d\s-]/g, "") // only digits, space, dash
-      .replace(/^[\s-]+/, "") // no leading separator
-      .replace(/([\s-])[\s-]+/g, "$1"); // collapse repeated separators
-    setForm((prev) => ({ ...prev, phone: cleaned }));
-    if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
-  };
+    const v = e.target.value
+      .replace(/[^\d\s+-]/g, "") // digits, space, dash, + only
+      .replace(/(?!^)\+/g, "") // + only as the first char
+      .replace(/^(\+?)[\s-]+/, "$1") // no separator at the start or right after +
+      .replace(/[\s-]{2,}/g, (m) => m[0]); // max one separator in a row
 
-  const handlePhoneBlur = () => {
-    setForm((prev) => ({ ...prev, phone: prev.phone.replace(/[\s-]+$/, "") }));
+    if (v.replace(/\D/g, "").length > 17) return; // digit cap
+
+    setForm((prev) => ({ ...prev, phone: v }));
+    if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
   };
 
   const handleSelectCountry = (country) => {
@@ -237,6 +225,12 @@ export default function Register() {
     otpRefs.current[Math.min(pasted.length, 5)]?.focus();
   };
 
+  const buildPhonePayload = (phone, countryCode) => {
+    const national = normalizePhone(phone || "");
+    if (!national) return { country_code: "", phone: "" };
+    return { country_code: normalizeDial(countryCode), phone: national };
+  };
+
   // ─── Step 1: Register → receive OTP ────────────────────────────────────────
 
   const handleSubmit = async (e) => {
@@ -250,8 +244,7 @@ export default function Register() {
     const payload = {
       name: form.name,
       email: form.email,
-      country_code: normalizeDial(selectedCountry.country_code),
-      phone: normalizePhone(form.phone),
+      ...buildPhonePayload(form.phone, selectedCountry.country_code),
       password: form.password,
     };
 
@@ -304,10 +297,10 @@ export default function Register() {
     const payload = {
       name: pending.name,
       email: pending.email,
-      country_code: normalizeDial(
+      ...buildPhonePayload(
+        pending.phone,
         pending.countryCode || selectedCountry.country_code,
       ),
-      phone: normalizePhone(pending.phone || ""),
       password: pending.password,
       otp_code: otpCode,
     };
@@ -505,7 +498,10 @@ export default function Register() {
                       htmlFor="phone"
                       className="text-sm font-medium text-[#09090b]"
                     >
-                      Phone Number
+                      Phone Number{" "}
+                      <span className="font-normal text-[#a1a1aa]">
+                        (optional)
+                      </span>
                     </label>
                     <div className="flex gap-2">
                       <div
@@ -571,13 +567,9 @@ export default function Register() {
                         placeholder="234 567 890"
                         value={form.phone}
                         onChange={handlePhoneChange}
-                        onBlur={handlePhoneBlur}
                         className={inputClass("phone")}
                       />
                     </div>
-                    {errors.phone && (
-                      <p className="text-xs text-[#ef4444]">{errors.phone}</p>
-                    )}
                   </div>
 
                   {/* Password */}
