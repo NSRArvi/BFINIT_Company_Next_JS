@@ -11,6 +11,7 @@ import {
   CircleCheck,
 } from "lucide-react";
 import stripeIcon from "../../assets/icons/stripe.png";
+import paypalIcon from "../../assets/icons/paypal.png";
 import BankInfo from "./order-details/BankInfo";
 
 const PAYMENT_METHODS = [
@@ -28,6 +29,19 @@ const PAYMENT_METHODS = [
         height={1000}
         src={stripeIcon}
         alt="stripe icon"
+        className="w-3.5"
+      />
+    ),
+  },
+  {
+    id: "paypal",
+    label: "Paypal",
+    icon: () => (
+      <Image
+        width={1000}
+        height={1000}
+        src={paypalIcon}
+        alt="paypal icon"
         className="w-3.5"
       />
     ),
@@ -203,7 +217,7 @@ export default function OrderDetails({
             <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#8FADC8]">
               Payment Method
             </p>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-3 gap-2.5">
               {PAYMENT_METHODS.map(({ id, label, icon: Icon }) => {
                 const active = activePayment === id;
                 return (

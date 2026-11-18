@@ -15,6 +15,10 @@ import useAuth from "@/hooks/useAuth";
 import { handleUnauthorized } from "@/lib/auth";
 import RepayStripeDialog from "@/components/modals/RepayStripeDialog";
 import toast from "react-hot-toast";
+import Image from "next/image";
+import paypalIcon from "../../../assets/icons/paypal.png";
+
+const REPAYABLE_METHODS = ["stripe", "paypal"];
 
 function getPayHref(order, invoice) {
   if (invoice?.status !== "pending" || invoice.payment_method !== "solana") {
@@ -42,6 +46,7 @@ const METHODS = {
   bank_transfer: { icon: Building2, label: "Bank" },
   stripe: { icon: CreditCard, label: "Stripe" },
   solana: { icon: Bitcoin, label: "Crypto" },
+  paypal: { image: paypalIcon, label: "PayPal" },
   trial: { icon: Gift, label: "Free trial" },
 };
 
@@ -52,7 +57,17 @@ function PaymentMethod({ method }) {
   const Icon = config.icon;
   return (
     <div className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-      <Icon size={14} />
+      {config.image ? (
+        <Image
+          src={config.image}
+          alt={config.label}
+          width={14}
+          height={14}
+          className="h-3.5 w-3.5 object-contain grayscale opacity-75"
+        />
+      ) : (
+        <Icon size={14} />
+      )}
       {config.label}
     </div>
   );
@@ -126,12 +141,14 @@ function getRow(order) {
   }
 
   const settled = invoice?.status === "paid" || invoice?.status === "active";
+
   return {
     ...base,
     expired: false,
     payHref: getPayHref(order, invoice),
-    canRepayStripe:
-      invoice?.status === "pending" && invoice?.payment_method === "stripe",
+    canRepay:
+      invoice?.status === "pending" &&
+      REPAYABLE_METHODS.includes(invoice?.payment_method),
     price: `€${formatAmount(invoice?.payment_amount)}`,
     unit: order.subscriptionPeriod?.duration === 1 ? "month" : "year",
     status: {
@@ -160,12 +177,21 @@ export default function OrderTable({ orders = [], onRefresh }) {
       if (!res.ok || !data.success) {
         throw new Error(data.message || "Could not retry payment");
       }
-      setPayment(data.data);
+
+      const { paypal_approve_url } = data.data;
+
+      if (paypal_approve_url) {
+        // external redirect, keep the loading state, page is leaving anyway
+        sessionStorage.setItem("pendingInvoice", invoiceNumber);
+        window.location.href = paypal_approve_url;
+        return;
+      }
+
+      setPayment(data.data); // stripe dialog
     } catch (err) {
       toast.error(err.message);
-    } finally {
-      setRepayingId(null);
     }
+    setRepayingId(null);
   };
 
   const handleVerified = async (paymentIntent, invoiceNumber) => {
@@ -283,7 +309,7 @@ export default function OrderTable({ orders = [], onRefresh }) {
                         >
                           <Link href={row.payHref}>Repay</Link>
                         </Button>
-                      ) : row.canRepayStripe ? (
+                      ) : row.canRepay ? (
                         <Button
                           onClick={() => handleRepay(order)}
                           disabled={repayingId === row.invoiceNumber}

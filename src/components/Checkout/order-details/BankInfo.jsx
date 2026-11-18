@@ -63,37 +63,63 @@ export default function BankInfo() {
   const { token } = useAuth();
   const [loadingBank, setLoadingBank] = useState(true);
   const [bankInfo, setBankInfo] = useState([]);
+  const [activeId, setActiveId] = useState(null);
 
   const fetchBankInfo = async () => {
     setLoadingBank(true);
-    const res = await fetch(
-      `${ECOM_BASE_URL}/api/v1/platform-bank-payment/get-all`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
+    try {
+      const res = await fetch(
+        `${ECOM_BASE_URL}/api/v1/platform-bank-payment/get-all`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      handleUnauthorized(res);
+      if (!res.ok) throw new Error("Failed to fetch bank info");
 
-    handleUnauthorized(res);
-    if (!res.ok) throw new Error("Failed to fetch orders");
-
-    const data = await res.json();
-    if (data?.success && data?.data?.length > 0) setBankInfo(data?.data);
-    setLoadingBank(false);
+      const data = await res.json();
+      if (data?.success && data?.data?.length > 0) {
+        const active = data.data.filter((b) => b.is_active);
+        setBankInfo(active);
+        setActiveId(active[0]?.id ?? null);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingBank(false);
+    }
   };
 
   useEffect(() => {
     fetchBankInfo();
   }, []);
 
+  const activeBank = bankInfo.find((b) => b.id === activeId);
+
   return (
     <div className="space-y-3">
       <p className="text-[11px] text-[#4A6580]">
-        Transfer the exact total to any one bank below, then upload your slip.
+        Transfer the exact total to the bank below, then upload your slip.
       </p>
-      {bankInfo?.length > 0 &&
-        bankInfo?.map((bank) => <BankCard key={bank.id} bank={bank} />)}
+
+      {bankInfo.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {bankInfo.map((bank) => (
+            <button
+              key={bank.id}
+              type="button"
+              onClick={() => setActiveId(bank.id)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                activeId === bank.id
+                  ? "border-[#186BB5] bg-[#186BB5] text-white"
+                  : "border-[#D6E2EE] bg-white text-[#4A6580] hover:bg-[#F4F7FB]"
+              }`}
+            >
+              {bank.country}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {activeBank && <BankCard bank={activeBank} />}
     </div>
   );
 }

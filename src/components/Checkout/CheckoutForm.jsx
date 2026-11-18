@@ -13,6 +13,12 @@ import toast from "react-hot-toast";
 
 const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
+const PAYMENT_METHOD_MAP = {
+  bank: "bank_transfer",
+  stripe: "stripe",
+  paypal: "paypal",
+};
+
 export default function CheckoutForm({ details, currencies, bankInfo }) {
   const navigate = useRouter();
   const { token, loading, logout } = useAuth();
@@ -67,10 +73,7 @@ export default function CheckoutForm({ details, currencies, bankInfo }) {
       const amount = parseFloat((total_base_price - offerDiscount).toFixed(2));
 
       payload.append("amount", amount);
-      payload.append(
-        "payment_method",
-        paymentMethod === "bank" ? "bank_transfer" : "stripe",
-      );
+      payload.append("payment_method", PAYMENT_METHOD_MAP[paymentMethod]);
 
       if (offerDiscount > 0) {
         payload.append("discount_amount", offerDiscount);
@@ -145,6 +148,13 @@ export default function CheckoutForm({ details, currencies, bankInfo }) {
             setStripeClientSecret(client_secret);
           } else {
             console.error("No client_secret in response");
+          }
+        } else if (paymentMethod === "paypal") {
+          const { paypal_approve_url } = data.data;
+          if (paypal_approve_url) {
+            window.location.href = paypal_approve_url;
+          } else {
+            toast.error("PayPal approval link missing. Please try again.");
           }
         } else if (paymentMethod === "bank") {
           const invoice_number = data.data.invoice.invoice_number;

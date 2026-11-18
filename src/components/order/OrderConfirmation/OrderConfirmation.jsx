@@ -11,6 +11,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import logo from "../../../assets/logo/eblogo.png";
+import paypalIcon from "../../../assets/icons/paypal.png";
 
 import useAuth from "@/hooks/useAuth";
 import { ECOM_BASE_URL } from "@/config";
@@ -101,6 +102,7 @@ export default function OrderConfirmation({ invoice }) {
   const isBank = method === "bank_transfer";
   const isStripe = method === "stripe";
   const isCrypto = method === "solana";
+  const isPaypal = method === "paypal";
   const currency = (upgrade?.currency ?? "EUR").toUpperCase();
   const totalPaid = invoices?.payment_amount ?? upgrade?.amount;
   const isSettled = invoices?.status === "paid";
@@ -330,6 +332,18 @@ export default function OrderConfirmation({ invoice }) {
                 {isStripe && (
                   <>
                     <CreditCard size={14} /> <span>Stripe</span>
+                  </>
+                )}
+                {isPaypal && (
+                  <>
+                    <Image
+                      src={paypalIcon}
+                      alt="PayPal"
+                      width={16}
+                      height={16}
+                      className="h-4 w-4 object-contain"
+                    />
+                    <span>PayPal</span>
                   </>
                 )}
               </div>

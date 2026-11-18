@@ -84,7 +84,8 @@ export default function PersonalInfo({
           <div className="space-y-4">
             <div
               className="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
-              style={{ borderLeftWidth: "3px", borderLeftColor: "#186BB5" }}>
+              style={{ borderLeftWidth: "3px", borderLeftColor: "#186BB5" }}
+            >
               <Building2 size={15} className="mt-0.5 shrink-0 text-[#186BB5]" />
               <p className="text-xs leading-relaxed text-gray-600">
                 Transfer the exact amount shown in the order summary, then fill
@@ -124,7 +125,7 @@ export default function PersonalInfo({
                 name="account_no"
                 value={formData.account_no ?? ""}
                 onChange={handleChange}
-                placeholder="e.g. 1234567890"
+                placeholder="Enter account number"
                 required
                 className={inputClass}
               />
@@ -140,7 +141,7 @@ export default function PersonalInfo({
                 name="bank_name"
                 value={formData.bank_name ?? ""}
                 onChange={handleChange}
-                placeholder="e.g. Dutch Bangla Bank"
+                placeholder="Enter bank name"
                 required
                 className={inputClass}
               />
@@ -156,7 +157,7 @@ export default function PersonalInfo({
                 name="branch"
                 value={formData.branch ?? ""}
                 onChange={handleChange}
-                placeholder="e.g. Gulshan Branch"
+                placeholder="Enter branch name"
                 required
                 className={inputClass}
               />
@@ -172,7 +173,7 @@ export default function PersonalInfo({
                 name="phone"
                 value={formData.phone ?? ""}
                 onChange={handleChange}
-                placeholder="e.g. 01700000000"
+                placeholder="Enter phone number"
                 required
                 className={inputClass}
               />
@@ -189,7 +190,7 @@ export default function PersonalInfo({
                 name="transaction_id"
                 value={formData.transaction_id ?? ""}
                 onChange={handleChange}
-                placeholder="e.g. TXN123456789"
+                placeholder="Enter transaction or reference ID"
                 required
                 className={inputClass}
               />
@@ -198,7 +199,8 @@ export default function PersonalInfo({
             {/* Payment Date & Time */}
             <div className="space-y-1.5">
               <label className={labelClass}>
-                Payment Date &amp; Time <span className="text-red-500">*</span>
+                Select payment Date &amp; Time{" "}
+                <span className="text-red-500">*</span>
               </label>
               <input
                 type="datetime-local"
@@ -268,7 +270,8 @@ export default function PersonalInfo({
                     <button
                       type="button"
                       onClick={removeSlip}
-                      className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-red-500 transition-colors hover:bg-red-50">
+                      className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-red-500 transition-colors hover:bg-red-50"
+                    >
                       <X size={12} /> Remove
                     </button>
                   </div>
@@ -291,11 +294,13 @@ export default function PersonalInfo({
           />
           <label
             htmlFor="terms"
-            className="text-xs leading-relaxed text-gray-500">
+            className="text-xs leading-relaxed text-gray-500"
+          >
             I have read the{" "}
             <Link
               href="/terms"
-              className="font-bold text-[#186BB5] underline-offset-2 hover:underline">
+              className="font-bold text-[#186BB5] underline-offset-2 hover:underline"
+            >
               terms and conditions
             </Link>
           </label>
