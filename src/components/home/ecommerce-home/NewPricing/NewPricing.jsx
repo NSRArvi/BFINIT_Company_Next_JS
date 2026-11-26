@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
+import { CreditCard, Landmark, Wallet } from "lucide-react";
 import { ECOM_BASE_URL } from "@/config";
 import EcomPricingCard3 from "../../../Cards/EcomPricingCard3";
-import spumpLogo from "../../../../assets/logo/spump_logo.png";
 import Image from "next/image";
 import Container from "@/components/shared/Container";
 import EcomTrialCard from "@/components/Cards/EcomTrialCard";
@@ -12,40 +12,32 @@ const durations = [
   { id: 1, month: 12, label: "Yearly" },
 ];
 
-const currencies = [
+const paymentMethods = [
   {
-    id: "eur",
-    label: "Euro",
-    symbol: "€",
-    icon: (
-      <span className="flex size-8 items-center justify-center rounded-full bg-brand/10 text-[10px] font-bold text-brand">
-        €
-      </span>
-    ),
+    id: "cards",
+    label: "Cards",
+    icon: <CreditCard className="size-4 text-brand" strokeWidth={1.75} />,
+  },
+  {
+    id: "paypal",
+    label: "PayPal",
+    icon: <Wallet className="size-4 text-brand" strokeWidth={1.75} />,
+  },
+  {
+    id: "bank",
+    label: "Bank transfer",
+    icon: <Landmark className="size-4 text-brand" strokeWidth={1.75} />,
   },
   {
     id: "spump",
     label: "SPUMP",
     icon: (
       <Image
-        width={1000}
-        height={1000}
+        width={20}
+        height={20}
         src="https://scottypumpkin.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fhero.ecd1dcc2.png&w=640&q=75"
-        alt=""
-        className="size-8 rounded-full"
-      />
-    ),
-  },
-  {
-    id: "usff",
-    label: "USFF",
-    icon: (
-      <Image
-        width={1000}
-        height={1000}
-        src="https://usfranc.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo.bdd0bb3c.webp&w=640&q=100"
-        alt=""
-        className="size-8 rounded-full"
+        alt="SPUMP"
+        className="size-5 rounded-full object-cover"
       />
     ),
   },
@@ -54,18 +46,31 @@ const currencies = [
     label: "USDC",
     icon: (
       <Image
-        width={1000}
-        height={1000}
+        width={20}
+        height={20}
         src="https://assets.coingecko.com/coins/images/6319/small/usdc.png"
-        alt=""
-        className="size-8 rounded-full"
+        alt="USDC"
+        className="size-5 rounded-full object-cover"
+      />
+    ),
+  },
+  {
+    id: "usff",
+    label: "USFF",
+    icon: (
+      <Image
+        width={20}
+        height={20}
+        src="https://usfranc.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo.bdd0bb3c.webp&w=640&q=100"
+        alt="USFF"
+        className="size-5 rounded-full object-cover"
       />
     ),
   },
 ];
 
 const NewPricing = ({ pricingSection }) => {
-  const [selectedDuration, setSelectedDuration] = useState(1);
+  const [selectedDuration, setSelectedDuration] = useState(12);
   const [packages, setPackages] = useState([]);
 
   const trialPackage = packages.find(
@@ -114,45 +119,122 @@ const NewPricing = ({ pricingSection }) => {
           </div>
         )}
 
-        {/* 3. Duration toggle */}
-        <div className="mt-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="mr-1 text-[10.5px] font-bold uppercase tracking-widest text-custom-gray">
-              We accept
-            </span>
-            {currencies.map((currency) => (
-              <div
-                key={currency.id}
-                title={currency.label}
-                className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5"
-              >
-                <span className="flex *:size-5!">{currency.icon}</span>
-                <span className="font-inter text-xs font-semibold text-gray-600">
-                  {currency.label}
-                </span>
-                {(currency.id === "spump" || currency.id === "usff") && (
-                  <span className="rounded-full bg-brand/10 px-1.5 py-0.5 text-[9px] font-bold text-brand">
-                    −30%
-                  </span>
-                )}
+        {/* 3. Pricing */}
+        {/* <div className="mt-14 flex flex-col items-center text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-dark sm:text-4xl md:text-[42px]">
+            Plans and pricing
+          </h2>
+
+          <div
+            role="group"
+            aria-label="Billing cycle"
+            className="mt-6 inline-flex flex-wrap items-center justify-center gap-1 rounded-full bg-slate-100 p-1.5"
+          >
+            {durations.map((duration) => {
+              const isSelected = selectedDuration === duration.month;
+              const isYearly = duration.month === 12;
+
+              return (
+                <button
+                  key={duration.id}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedDuration(duration.month)}
+                  className={`inline-flex items-center gap-2.5 rounded-full px-6 py-2.5 font-inter text-sm font-medium transition-all duration-200 ${
+                    isSelected
+                      ? "bg-brand text-white shadow-xs"
+                      : "text-slate-600 hover:text-dark"
+                  }`}
+                >
+                  <span>{duration.label}</span>
+                  {isYearly && (
+                    <span
+                      className={`rounded-full border px-3 py-0.5 text-xs font-medium transition-colors ${
+                        isSelected
+                          ? "border-white/20 bg-white text-brand"
+                          : "border-brand/20 bg-white text-brand"
+                      }`}
+                    >
+                      30% off with yearly
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="my-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 font-inter text-xs text-slate-500 sm:text-sm">
+            <span>We accept</span>
+            {paymentMethods.map((method) => (
+              <div key={method.id} className="flex items-center gap-1.5">
+                {method.icon}
+                <span>{method.label}</span>
               </div>
             ))}
           </div>
+        </div> */}
+        <div className="mt-10 flex flex-col items-center px-4 text-center sm:mt-14">
+          <h2 className="text-balance text-2xl font-bold tracking-tight text-dark sm:text-3xl md:text-4xl lg:text-[42px]">
+            Plans and pricing
+          </h2>
 
-          <div className="flex w-full rounded-xl border border-gray-200 bg-gray-50 p-1 md:w-auto">
-            {durations.map((duration) => (
-              <button
-                key={duration.id}
-                onClick={() => setSelectedDuration(duration.month)}
-                className={`flex-1 rounded-lg px-6 py-2 font-inter text-sm font-semibold transition-all duration-200 md:flex-none ${
-                  selectedDuration === duration.month
-                    ? "bg-brand text-white"
-                    : "text-gray-700 hover:text-gray-900"
-                }`}
-              >
-                {duration.label}
-              </button>
-            ))}
+          {/* Billing toggle: 2 equal columns on mobile, compact pill on sm+ */}
+          <div
+            role="group"
+            aria-label="Billing cycle"
+            className="mt-6 grid w-full max-w-sm grid-cols-2 gap-1 rounded-full bg-slate-100 p-1.5 sm:inline-grid sm:w-auto sm:max-w-none"
+          >
+            {durations.map((duration) => {
+              const isSelected = selectedDuration === duration.month;
+              const isYearly = duration.month === 12;
+
+              return (
+                <button
+                  key={duration.id}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedDuration(duration.month)}
+                  className={`inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full px-3 py-2 font-inter text-sm font-medium transition-all duration-200 sm:gap-2.5 sm:px-6 ${
+                    isSelected
+                      ? "bg-brand text-white shadow-xs"
+                      : "text-slate-600 hover:text-dark"
+                  }`}
+                >
+                  <span>{duration.label}</span>
+                  {isYearly && (
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold transition-colors sm:px-3 sm:text-xs ${
+                        isSelected
+                          ? "border-white/20 bg-white text-brand"
+                          : "border-brand/20 bg-white text-brand"
+                      }`}
+                    >
+                      <span className="sm:hidden">30% off</span>
+                      <span className="hidden sm:inline">
+                        30% off with crypto
+                      </span>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="my-6 flex w-full flex-col items-center gap-3 font-inter text-xs text-slate-500 sm:text-sm md:flex-row md:justify-center md:gap-x-6">
+            <span className="font-medium">We accept :</span>
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-3 sm:flex sm:flex-wrap sm:justify-center sm:gap-x-6 sm:gap-y-2.5">
+              {paymentMethods.map((method) => (
+                <li
+                  key={method.id}
+                  className="flex items-center gap-1.5 whitespace-nowrap"
+                >
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center *:h-full *:w-full *:object-contain">
+                    {method.icon}
+                  </span>
+                  <span>{method.label}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
@@ -168,7 +250,7 @@ const NewPricing = ({ pricingSection }) => {
         </div>
 
         {/* 5. We accept */}
-        <p className="mt-8 text-center font-inter text-sm text-gray-400">
+        <p className="mt-8 text-center font-inter text-xs text-gray-500">
           No hidden fees. Cancel anytime. Upgrade as you grow.
         </p>
       </Container>

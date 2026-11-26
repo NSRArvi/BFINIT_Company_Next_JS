@@ -107,18 +107,19 @@ export default function EcomPricingCard3({ pack, selectedDuration }) {
               Get Started
             </Link>
 
-            <p className="mt-2 text-[11px] text-gray-600">
-              Or pay with{" "}
-              <span className="cursor-pointer font-semibold text-brand hover:underline">
-                SPUMP
-              </span>{" "}
-              or{" "}
-              <span className="cursor-pointer font-semibold text-brand hover:underline">
-                USFF
-              </span>{" "}
-              and save{" "}
-              <span className="font-semibold text-brand">€{spumpSavings}</span>
-            </p>
+            {isYearSelected && (
+              <p className="mt-2 text-[11px] text-gray-600">
+                Or pay with{" "}
+                <span className="cursor-pointer font-semibold text-brand hover:underline">
+                  SPUMP
+                </span>{" "}
+                or{" "}
+                <span className="cursor-pointer font-semibold text-brand hover:underline">
+                  USFF
+                </span>{" "}
+                and save <span className="font-semibold text-brand">30%</span>
+              </p>
+            )}
 
             <hr className="my-4 border-softGray" />
 
@@ -141,7 +142,7 @@ export default function EcomPricingCard3({ pack, selectedDuration }) {
             <hr className="my-4 border-softGray" />
 
             {/* Feature list */}
-            <p className="mb-2.5 text-[10.5px] font-bold uppercase tracking-widest text-custom-gray">
+            <p className="mb-2.5 text-xs font-bold uppercase tracking-widest text-custom-gray">
               What&apos;s included
             </p>
             <ul className="space-y-2">
@@ -172,10 +173,6 @@ export default function EcomPricingCard3({ pack, selectedDuration }) {
                 )}
               </button>
             )}
-
-            <p className="mt-2.5 text-center text-[11px] text-gray-600">
-              No credit card required
-            </p>
           </div>
         </div>
       </div>
