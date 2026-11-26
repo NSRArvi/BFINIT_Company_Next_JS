@@ -141,13 +141,15 @@ const NewPricing = ({ pricingSection }) => {
                   type="button"
                   aria-pressed={isSelected}
                   onClick={() => setSelectedDuration(duration.month)}
-                  className={`inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium transition-all duration-200 sm:gap-2.5 sm:px-6 ${
+                  className={`inline-flex min-h-11 items-center cursor-pointer justify-center gap-2 whitespace-nowrap rounded-full px-3 py-2 transition-all duration-200 sm:gap-2.5 sm:px-6 ${
                     isSelected
                       ? "bg-brand text-white shadow-xs"
                       : "text-slate-600 hover:text-dark"
                   }`}
                 >
-                  <span className="font-inter">{duration.label}</span>
+                  <span className="font-inte text-sm font-medium">
+                    {duration.label}
+                  </span>
                   {isYearly && (
                     <span
                       className={`rounded-full border px-2 py-0.5 text-[11px] transition-colors sm:px-3 sm:text-xs ${
