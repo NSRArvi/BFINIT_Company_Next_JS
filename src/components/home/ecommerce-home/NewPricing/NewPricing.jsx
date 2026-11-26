@@ -16,17 +16,17 @@ const paymentMethods = [
   {
     id: "cards",
     label: "Cards",
-    icon: <CreditCard className="size-4 text-brand" strokeWidth={1.75} />,
+    icon: <CreditCard className="size-4 text-brand" strokeWidth={2} />,
   },
   {
     id: "paypal",
     label: "PayPal",
-    icon: <Wallet className="size-4 text-brand" strokeWidth={1.75} />,
+    icon: <Wallet className="size-4 text-brand" strokeWidth={2} />,
   },
   {
     id: "bank",
     label: "Bank transfer",
-    icon: <Landmark className="size-4 text-brand" strokeWidth={1.75} />,
+    icon: <Landmark className="size-4 text-brand" strokeWidth={2} />,
   },
   {
     id: "spump",
@@ -120,65 +120,12 @@ const NewPricing = ({ pricingSection }) => {
         )}
 
         {/* 3. Pricing */}
-        {/* <div className="mt-14 flex flex-col items-center text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-dark sm:text-4xl md:text-[42px]">
-            Plans and pricing
-          </h2>
 
-          <div
-            role="group"
-            aria-label="Billing cycle"
-            className="mt-6 inline-flex flex-wrap items-center justify-center gap-1 rounded-full bg-slate-100 p-1.5"
-          >
-            {durations.map((duration) => {
-              const isSelected = selectedDuration === duration.month;
-              const isYearly = duration.month === 12;
-
-              return (
-                <button
-                  key={duration.id}
-                  type="button"
-                  aria-pressed={isSelected}
-                  onClick={() => setSelectedDuration(duration.month)}
-                  className={`inline-flex items-center gap-2.5 rounded-full px-6 py-2.5 font-inter text-sm font-medium transition-all duration-200 ${
-                    isSelected
-                      ? "bg-brand text-white shadow-xs"
-                      : "text-slate-600 hover:text-dark"
-                  }`}
-                >
-                  <span>{duration.label}</span>
-                  {isYearly && (
-                    <span
-                      className={`rounded-full border px-3 py-0.5 text-xs font-medium transition-colors ${
-                        isSelected
-                          ? "border-white/20 bg-white text-brand"
-                          : "border-brand/20 bg-white text-brand"
-                      }`}
-                    >
-                      30% off with yearly
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="my-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 font-inter text-xs text-slate-500 sm:text-sm">
-            <span>We accept</span>
-            {paymentMethods.map((method) => (
-              <div key={method.id} className="flex items-center gap-1.5">
-                {method.icon}
-                <span>{method.label}</span>
-              </div>
-            ))}
-          </div>
-        </div> */}
         <div className="mt-10 flex flex-col items-center px-4 text-center sm:mt-14">
-          <h2 className="text-balance text-2xl font-bold tracking-tight text-dark sm:text-3xl md:text-4xl lg:text-[42px]">
+          <h2 className="text-balance text-2xl font-bold tracking-tight text-dark sm:text-3xl md:text-4xl font-inter">
             Plans and pricing
           </h2>
 
-          {/* Billing toggle: 2 equal columns on mobile, compact pill on sm+ */}
           <div
             role="group"
             aria-label="Billing cycle"
@@ -194,16 +141,16 @@ const NewPricing = ({ pricingSection }) => {
                   type="button"
                   aria-pressed={isSelected}
                   onClick={() => setSelectedDuration(duration.month)}
-                  className={`inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full px-3 py-2 font-inter text-sm font-medium transition-all duration-200 sm:gap-2.5 sm:px-6 ${
+                  className={`inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium transition-all duration-200 sm:gap-2.5 sm:px-6 ${
                     isSelected
                       ? "bg-brand text-white shadow-xs"
                       : "text-slate-600 hover:text-dark"
                   }`}
                 >
-                  <span>{duration.label}</span>
+                  <span className="font-inter">{duration.label}</span>
                   {isYearly && (
                     <span
-                      className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold transition-colors sm:px-3 sm:text-xs ${
+                      className={`rounded-full border px-2 py-0.5 text-[11px] transition-colors sm:px-3 sm:text-xs ${
                         isSelected
                           ? "border-white/20 bg-white text-brand"
                           : "border-brand/20 bg-white text-brand"
@@ -221,17 +168,17 @@ const NewPricing = ({ pricingSection }) => {
           </div>
 
           <div className="my-6 flex w-full flex-col items-center gap-3 font-inter text-xs text-slate-500 sm:text-sm md:flex-row md:justify-center md:gap-x-6">
-            <span className="font-medium">We accept :</span>
-            <ul className="grid grid-cols-2 gap-x-6 gap-y-3 sm:flex sm:flex-wrap sm:justify-center sm:gap-x-6 sm:gap-y-2.5">
+            <span className="text-xs">We accept :</span>
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-3 sm:flex sm:flex-wrap sm:justify-center sm:gap-x-4 sm:gap-y-2.5">
               {paymentMethods.map((method) => (
                 <li
                   key={method.id}
-                  className="flex items-center gap-1.5 whitespace-nowrap"
+                  className="flex items-center gap-1 whitespace-nowrap"
                 >
                   <span className="flex h-4 w-4 shrink-0 items-center justify-center *:h-full *:w-full *:object-contain">
                     {method.icon}
                   </span>
-                  <span>{method.label}</span>
+                  <span className="text-xs">{method.label}</span>
                 </li>
               ))}
             </ul>
